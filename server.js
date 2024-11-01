@@ -3,19 +3,24 @@ import cors from "cors";
 import pg from "pg";
 import dotenv from "dotenv";
 
+dotenv.config();
+
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001; // Use the port from environment variables, default to 3001 if undefined
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-dotenv.config();
 
+// Database connection setup
 const db = new pg.Client({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_DATABASE,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: false, // Required for some hosted databases
+  },
 });
 
 db.connect()
@@ -46,7 +51,8 @@ app.get("/get-data", async (req, res) => {
     res.send(jsonData);
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ error: "Failed to fetch data" });
   }
 });
 
-app.listen(port, console.log(`Listening to port ${port}`));
+app.listen(port, () => console.log(`Listening to port ${port}`));
